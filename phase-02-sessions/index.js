@@ -1,9 +1,23 @@
 const express = require("express");
 const dotenv = require("dotenv");
+const session = require("express-session");
 dotenv.config();
 
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4040;
+
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: false,    // set to true in production (HTTPS)
+    sameSite: "strict",
+    maxAge: 1000 * 60 * 60 * 24   // 24 hours in milliseconds
+  }
+}));
 
 app.use(express.json());
 

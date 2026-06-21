@@ -24,6 +24,37 @@ router.post("/register", async (req, res, next) => {
 
     res.status(201).json({ message: "User registered successfully" });
 
+  }catch(err){
+  if (err.code === "23505") {
+    return res.status(400).json({ error: "Email already registered" });
+  }
+  next(err);
+}
+});
+
+router.post("/login", async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    const result = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
+    const user = result.rows[0];
+
+    if (!user) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    req.session.userId = user.id;
+
+    res.status(200).json({ message: "Logged in successfully" });
+
   } catch (err) {
     next(err);
   }
