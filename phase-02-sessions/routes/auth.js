@@ -60,4 +60,34 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
+router.get('/dashboard', async (req, res, next) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Unauthorized - please log in" });
+    }
+
+    const result = await pool.query(
+      "SELECT id, email, created_at FROM users WHERE id = $1",
+      [req.session.userId]
+    );
+
+    const user = result.rows[0];
+
+    return res.status(200).json({ user });
+
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/logout', (req, res, next) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return next(err);
+    }
+    res.clearCookie('connect.sid');
+    return res.status(200).json({ message: "Logged out successfully" });
+  });
+});
+
 module.exports = router;
