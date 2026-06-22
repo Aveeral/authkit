@@ -24,6 +24,15 @@ app.use(express.json());
 const authRoutes = require("./routes/auth");
 app.use("/api/auth", authRoutes);
 
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  
+  const status = err.status || 500;
+  const message = err.message || "Internal server error";
+  
+  res.status(status).json({ error: message });
+});
+
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
