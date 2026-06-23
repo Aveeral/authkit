@@ -14,13 +14,10 @@ function authenticate(req, res, next) {
     }
 
     const token = parts[1];
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     req.user = decoded;
-
     next();
-
+    
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({ error: "Token expired" });

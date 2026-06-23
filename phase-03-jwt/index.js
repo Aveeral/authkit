@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 4040;
 app.use(express.json());
 app.use(cookieParser());
 
+
 const authRoutes = require("./routes/auth");
 app.use("/api/auth", authRoutes);
 
