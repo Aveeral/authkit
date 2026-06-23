@@ -1,5 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv");
+const cookieParser = require("cookie-parser");
 dotenv.config();
 
 
@@ -11,6 +12,7 @@ app.use(express.json());
 
 const authRoutes = require("./routes/auth");
 app.use("/api/auth", authRoutes);
+app.use('cookieParser');
 
 
 app.get("/health", (req, res) => {
@@ -20,6 +22,7 @@ app.get("/health", (req, res) => {
   });
 });
 
+app.use()
 app.use((err, req, res, next) => {
   console.error(err.stack);
   
