@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require("bcrypt");
 const pool = require("../db.js");
 
+
 router.post("/register", async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -89,5 +90,7 @@ router.post('/logout', (req, res, next) => {
     return res.status(200).json({ message: "Logged out successfully" });
   });
 });
+
+
 
 module.exports = router;
