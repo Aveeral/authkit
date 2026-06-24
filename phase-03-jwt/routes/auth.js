@@ -119,5 +119,81 @@ router.get('/dashboard', authenticate, async (req, res, next) => {
   }
 });
 
+router.post('/refresh', async (req, res, next) => {
+  try {
+    const token = req.cookies.refreshToken;
+
+    if (!token) {
+      return res.status(401).json({ error: "No refresh token provided" });
+    }
+
+    // find token in database
+    const { rows } = await pool.query(
+      "SELECT * FROM refresh_tokens WHERE token = $1",
+      [token]
+    );
+    const tokenRecord = rows[0];
+
+    if (!tokenRecord) {
+      return res.status(401).json({ error: "Invalid refresh token" });
+    }
+
+    // check expiry
+    if (new Date(tokenRecord.expires_at) < new Date()) {
+      await pool.query(
+        "DELETE FROM refresh_tokens WHERE token = $1",
+        [token]
+      );
+      return res.status(401).json({ error: "Refresh token expired" });
+    }
+
+    // delete old refresh token (rotation)
+    await pool.query(
+      "DELETE FROM refresh_tokens WHERE token = $1",
+      [token]
+    );
+
+    // get user data
+    const { rows: userRows } = await pool.query(
+      "SELECT id, email FROM users WHERE id = $1",
+      [tokenRecord.user_id]
+    );
+    const user = userRows[0];
+
+    // generate new access token
+    const accessToken = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    // generate new refresh token
+    const newRefreshToken = require('crypto').randomBytes(64).toString('hex');
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    // store new refresh token
+    await pool.query(
+      "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)",
+      [user.id, newRefreshToken, expiresAt]
+    );
+
+    // set new cookie
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    res.status(200).json({
+      message: "Tokens refreshed successfully",
+      accessToken
+    });
+
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
 
