@@ -49,3 +49,28 @@ router.get("/", async (req,res,next) => {
         next(err);
     }
 })
+
+router.delete("/:id", async (req,res,next) => {
+    try{
+
+        const user = req.user;
+        if(!user){
+            return res.status(401).json({error : "User not found!"});
+        }
+        const id = req.params.id;
+
+        const { rows } = await pool.query(
+        "DELETE FROM api_keys WHERE id = $1 AND user_id = $2 RETURNING id",
+        [id, user.userId]
+        );
+
+        if (!rows[0]) {
+        return res.status(404).json({ error: "Key not found!" });
+        } 
+
+        return res.status(200).json("Deletion successful!");
+
+    }catch(err){
+        next(err);
+    }
+})
