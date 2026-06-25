@@ -13,7 +13,9 @@ app.use(cookieParser());
 
 
 const authRoutes = require("./routes/auth");
+const keyRoutes = require("./routes/keys");
 app.use("/api/auth", authRoutes);
+app.use("/api/key-auth", keyRoutes);
 
 
 
