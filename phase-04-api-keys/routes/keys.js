@@ -31,7 +31,20 @@ router.post("/", async (req,res,next) => {
 
 router.get("/", async (req,res,next) => {
     try{
-        
+
+       const user = req.user;
+       if(!user){
+        return res.status(401).json({error : "User not found!"});
+       }
+
+       const user_id = user.userId;
+       const {rows} = await pool.query("SELECT id,name,scopes FROM api_keys WHERE user_id = $1",[user_id]);
+       if(!rows){
+        return res.status(404).json({error : "No API keys found!"});
+       }
+
+       return res.status(200).json({keys : rows});
+       
     }catch(err){
         next(err);
     }
