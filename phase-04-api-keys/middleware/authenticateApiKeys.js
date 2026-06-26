@@ -31,3 +31,5 @@ async function authenticateApiKeys(req,res,next){
     }
 
 }
+
+module.exports = authenticateApiKeys;
