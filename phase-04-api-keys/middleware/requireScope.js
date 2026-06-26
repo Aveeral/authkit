@@ -20,5 +20,6 @@ function requireScope(reqScope){
         next(err);
     }
 }
-
 }
+
+module.exports = requireScope;

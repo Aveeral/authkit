@@ -4,6 +4,8 @@ const pool = require("../db");
 const crypto = require('crypto');
 const authenticate = require("../middleware/authenticate.js");
 const authenticateApiKeys = require("../middleware/authenticateApiKeys");
+const requireScope = require("../middleware/requireScope.js")
+
 
 
 router.post("/",authenticate, async (req,res,next) => {
@@ -77,6 +79,8 @@ router.delete("/:id",authenticate, async (req,res,next) => {
     }
 })
 
-router.get("/dashboard",)
+router.get("/dashboard", authenticateApiKeys, requireScope("read:dashboard"), (req, res) => {
+    return res.status(200).json({message : "Protected route logic working perfectly!"})
+});
 
 module.exports = router;
