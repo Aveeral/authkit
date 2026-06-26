@@ -2,9 +2,10 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 const crypto = require('crypto');
+const authenticate = require("../middleware/authenticate.js");
 
 
-router.post("/", async (req,res,next) => {
+router.post("/",authenticate, async (req,res,next) => {
     try{
 
     const user = req.user;

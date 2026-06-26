@@ -12,6 +12,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 
+
 const authRoutes = require("./routes/auth");
 const keyRoutes = require("./routes/keys");
 app.use("/api/auth", authRoutes);
