@@ -28,3 +28,26 @@ router.get("/google", async (req,res,next) => {
         next(err);
     }
 })
+
+router.get("/google/callback", async (req,res,next) => {
+
+    try{
+
+    const state = req.query.state;
+    if(!state){
+        return res.status(404).json({error : "state not found!"});
+    }
+    if(state != req.session.state){
+        return res.status(401).json({error : "  Invalid state"});
+    }
+
+    const authCode = req.query.code;
+    if(!authCode){
+        return res.status(404).json({error : "Code not found!"});
+    }
+
+    }catch(err){
+        next(err);
+    }
+
+})
