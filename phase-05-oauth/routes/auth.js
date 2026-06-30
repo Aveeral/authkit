@@ -68,12 +68,41 @@ router.get("/google/callback", async (req,res,next) => {
     }
     const data = await response.json();
 
-    const ticket = await client.verifyIdToken({
+    const decoded_idToken = await client.verifyIdToken({
         idToken: data.id_token,
         audience: process.env.GOOGLE_CLIENT_ID
     });
     
-    
+    const payload = decoded_idToken.getPayload();
+
+    const sub = payload.sub;
+    const {rows} = await pool.query("SELECT * FROM oauth_accounts WHERE provider = $1 AND provider_user_id = $2",['google',sub]);
+
+    if(!rows[0]){
+
+        const email = payload.email;
+        const info = await pool.query("SELECT * FROM users WHERE email = $1",[email]);
+        const user = info.rows[0];
+
+        if(!user){
+            const {rows :newUserRows} = await pool.query("INSERT INTO users(email,password_hash) VALUES($1,$2) RETURNING *",[email,NULL]);
+            const newUser = newUserRows[0];
+            await pool.query("INSERT INTO oauth_accounts(provider,provider_user_id,user_id) VALUES($1,$2,$3)",['google',sub,newUser.id]);
+
+            const accessToken = jwt.sign(
+                  {userId: newUser.id, email: newUser.email },
+                  process.env.JWT_SECRET,
+                  { expiresIn: '15m' }
+                );
+            const refreshToken = crypto.randomButes(64).toString('hex');
+            await pool.query("INSERT INTO refresh_tokens(user_id,token) VALUES($1,$2)",[newUser.id,refreshToken]);
+            req.session.refreshToken = refreshToken;
+            return res.status(201).json({message : "OAuth account created successfully!",accessToken});
+        }
+        else{
+            return res.status(401).json({error: "Account already exists to link with google account please enter account password!"});
+        } 
+    }
 
     }catch(err){
         next(err);
