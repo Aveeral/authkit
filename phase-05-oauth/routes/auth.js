@@ -140,3 +140,5 @@ router.get("/google/callback", async (req,res,next) => {
     }
 
 })
+
+module.exports = router;
