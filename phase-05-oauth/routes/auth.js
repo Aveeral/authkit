@@ -94,14 +94,45 @@ router.get("/google/callback", async (req,res,next) => {
                   process.env.JWT_SECRET,
                   { expiresIn: '15m' }
                 );
-            const refreshToken = crypto.randomButes(64).toString('hex');
-            await pool.query("INSERT INTO refresh_tokens(user_id,token) VALUES($1,$2)",[newUser.id,refreshToken]);
-            req.session.refreshToken = refreshToken;
+            const refreshToken = crypto.randomBytes(64).toString('hex');
+            const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+            await pool.query("INSERT INTO refresh_tokens(user_id,token,expires_at) VALUES($1,$2,$3)",[newUser.id,refreshToken,expiresAt]);
+
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                secure: false,
+                sameSite: 'strict',
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            });
+            
             return res.status(201).json({message : "OAuth account created successfully!",accessToken});
         }
         else{
             return res.status(401).json({error: "Account already exists to link with google account please enter account password!"});
         } 
+    }
+
+    else{
+       
+        // Oauth account already exists just have to log the user in 
+        const accessToken = jwt.sign(
+            {email: payload.email, userId: rows[0].user_id},
+            process.env.JWT_SECRET,
+            {expiresIn: "15m"}
+        )
+        const refreshToken = crypto.randomBytes(64).toString('hex');
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        await pool.query("INSERT INTO refresh_tokens(user_id,token,expires_at) VALUES($1,$2,$3)",[rows[0].user_id,refreshToken,expiresAt]);
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        return res.json({message : "Login Successful!",accessToken});
+        
     }
 
     }catch(err){
