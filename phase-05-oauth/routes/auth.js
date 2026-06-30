@@ -85,7 +85,7 @@ router.get("/google/callback", async (req,res,next) => {
         const user = info.rows[0];
 
         if(!user){
-            const {rows :newUserRows} = await pool.query("INSERT INTO users(email,password_hash) VALUES($1,$2) RETURNING *",[email,NULL]);
+            const {rows :newUserRows} = await pool.query("INSERT INTO users(email,password_hash) VALUES($1,$2) RETURNING *",[email,null]);
             const newUser = newUserRows[0];
             await pool.query("INSERT INTO oauth_accounts(provider,provider_user_id,user_id) VALUES($1,$2,$3)",['google',sub,newUser.id]);
 
