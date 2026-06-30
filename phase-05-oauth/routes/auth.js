@@ -45,6 +45,27 @@ router.get("/google/callback", async (req,res,next) => {
     if(!authCode){
         return res.status(404).json({error : "Code not found!"});
     }
+    const url = "https://oauth2.googleapis.com/token";
+    const response = await fetch(url, {
+        method: "POST",
+        headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+        code: authCode,
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+        grant_type: "authorization_code",
+        code_verifier: req.session.code_verifier
+        })
+    });
+
+    if(!response.ok){
+        return res.status(401).json({error: "Token exchange failed!"});
+    }
+
+    const data = await response.json();       
 
     }catch(err){
         next(err);
