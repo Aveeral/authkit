@@ -4,6 +4,8 @@ const pool = require("../db");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const dotenv = require("dotenv");
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 dotenv.config();
 
 
@@ -64,8 +66,14 @@ router.get("/google/callback", async (req,res,next) => {
     if(!response.ok){
         return res.status(401).json({error: "Token exchange failed!"});
     }
+    const data = await response.json();
 
-    const data = await response.json();       
+    const ticket = await client.verifyIdToken({
+        idToken: data.id_token,
+        audience: process.env.GOOGLE_CLIENT_ID
+    });
+    
+    
 
     }catch(err){
         next(err);
