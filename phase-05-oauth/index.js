@@ -18,7 +18,7 @@ app.use(session({
   cookie: {
     httpOnly: true,
     secure: false,    // set to true in production (HTTPS)
-    sameSite: "strict",
+    sameSite: "lax",
     maxAge: 1000 * 60 * 60 * 24   // 24 hours in milliseconds
   }
 }));
@@ -28,7 +28,7 @@ app.use(cookieParser());
 
 
 const authRoutes = require("./routes/auth");
-app.use("/api/auth", authRoutes);
+app.use("/auth", authRoutes);
 
 
 
