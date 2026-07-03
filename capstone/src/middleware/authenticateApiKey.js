@@ -43,4 +43,4 @@ async function authenticateApiKey(req, res, next) {
   }
 }
 
-module.exports = { authenticateApiKey };
+module.exports = authenticateApiKey ;
