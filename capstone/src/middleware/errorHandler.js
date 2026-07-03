@@ -14,7 +14,7 @@ const errorHandler = (err, req, res, next) => {
   
   const status = err.status || 500;
   let message;
-  
+
     if (err instanceof AppError){
         message = err.message;
     } else if (NODE_ENV === 'production') {
@@ -25,3 +25,5 @@ const errorHandler = (err, req, res, next) => {
   
   res.status(status).json({ error: message });
 };
+
+module.exports = {AppError,errorHandler};
