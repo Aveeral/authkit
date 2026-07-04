@@ -194,6 +194,46 @@ router.post('/refresh', async (req, res, next) => {
     next(err);
   }
 });
+async function refresh(rawRefreshToken) {
+  if (!rawRefreshToken) {
+    throw new AppError("Refresh token missing", 401);
+  }
+
+  const tokenHash = crypto.createHash("sha256").update(rawRefreshToken).digest("hex");
+
+  const storedToken = await findRefreshTokenByHash(tokenHash);
+
+  if (!storedToken) {
+    throw new AppError("Invalid refresh token", 401);
+  }
+
+  if (new Date(storedToken.expires_at) < new Date()) {
+    await deleteRefreshTokenByHash(tokenHash);
+    throw new AppError("Refresh token expired", 401);
+  }
+
+  await deleteRefreshTokenByHash(tokenHash);
+
+  const user = await findUserById(storedToken.user_id);
+
+  if (!user) {
+    throw new AppError("User not found", 401);
+  }
+
+  const accessToken = jwt.sign(
+    { userId: user.id, email: user.email },
+    JWT_SECRET,
+    { expiresIn: "15m" }
+  );
+
+  const newRawRefreshToken = crypto.randomBytes(40).toString("hex");
+  const newRefreshTokenHash = crypto.createHash("sha256").update(newRawRefreshToken).digest("hex");
+  const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  await createRefreshToken(user.id, newRefreshTokenHash, newExpiresAt);
+
+  return { accessToken, refreshToken: newRawRefreshToken };
+}
 
 module.exports = router;
 

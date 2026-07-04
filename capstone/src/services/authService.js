@@ -1,6 +1,12 @@
 const bcrypt = require("bcrypt");
 const { AppError } = require("../middleware/errorHandler.js");
-const { findUserByEmail, createUser } = require("../repositories/userRepository.js");
+const { findUserByEmail, createUser,findUserById } = require("../repositories/userRepository.js");
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const { JWT_SECRET } = require("../config/env.js");
+const {findRefreshTokenByHash,deleteRefreshTokenByHash,createRefreshToken} = require("../repositories/tokenRepository.js")
+
+
 
 async function register(email, password) {
   const existingUser = await findUserByEmail(email);
@@ -24,14 +30,6 @@ async function register(email, password) {
   const { password_hash, ...safeUser } = user;
   return safeUser;
 }
-
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-const { AppError } = require("../middleware/errorHandler.js");
-const { findUserByEmail } = require("../repositories/userRepository.js");
-const { createRefreshToken } = require("../repositories/tokenRepository.js");
-const { JWT_SECRET } = require("../config/env.js");
 
 async function login(email, password) {
   const user = await findUserByEmail(email);
@@ -65,4 +63,45 @@ async function login(email, password) {
   };
 }
 
-module.exports = { register, login };
+async function refresh(rawRefreshToken) {
+  if (!rawRefreshToken) {
+    throw new AppError("Refresh token missing", 401);
+  }
+
+  const tokenHash = crypto.createHash("sha256").update(rawRefreshToken).digest("hex");
+
+  const storedToken = await findRefreshTokenByHash(tokenHash);
+
+  if (!storedToken) {
+    throw new AppError("Invalid refresh token", 401);
+  }
+
+  if (new Date(storedToken.expires_at) < new Date()) {
+    await deleteRefreshTokenByHash(tokenHash);
+    throw new AppError("Refresh token expired", 401);
+  }
+
+  await deleteRefreshTokenByHash(tokenHash);
+
+  const user = await findUserById(storedToken.user_id);
+
+  if (!user) {
+    throw new AppError("User not found", 401);
+  }
+
+  const accessToken = jwt.sign(
+    { userId: user.id, email: user.email },
+    JWT_SECRET,
+    { expiresIn: "15m" }
+  );
+
+  const newRawRefreshToken = crypto.randomBytes(40).toString("hex");
+  const newRefreshTokenHash = crypto.createHash("sha256").update(newRawRefreshToken).digest("hex");
+  const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  await createRefreshToken(user.id, newRefreshTokenHash, newExpiresAt);
+
+  return { accessToken, refreshToken: newRawRefreshToken };
+}
+
+module.exports = { register, login,refresh };
