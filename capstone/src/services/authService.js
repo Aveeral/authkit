@@ -104,4 +104,14 @@ async function refresh(rawRefreshToken) {
   return { accessToken, refreshToken: newRawRefreshToken };
 }
 
-module.exports = { register, login,refresh };
+async function logout(rawRefreshToken) {
+  if (!rawRefreshToken) {
+    throw new AppError("Refresh token missing", 401);
+  }
+
+  const tokenHash = crypto.createHash("sha256").update(rawRefreshToken).digest("hex");
+
+  await deleteRefreshTokenByHash(tokenHash);
+}
+
+module.exports = { register, login,refresh,logout };
