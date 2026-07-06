@@ -24,6 +24,16 @@ async function listKeys(userId) {
   return keys.map(({ key_hash, ...safeKey }) => safeKey);
 }
 
+async function removeKey(id, userId) {
+  const deleted = await deleteKey(id, userId);
+
+  if (!deleted) {
+    throw new AppError("API key not found", 404);
+  }
+
+  return deleted;
+}
+
 
 
 module.exports = generateKey;
