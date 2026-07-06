@@ -3,6 +3,7 @@ const { AppError } = require("../middleware/errorHandler.js");
 const { createKey } = require("../repositories/keyRepository.js");
 const { findKeysByUserId } = require("../repositories/keyRepository.js");
 const { deleteKey } = require("../repositories/keyRepository.js");
+const { updateKeyHash } = require("../repositories/keyRepository.js");
 
 async function generateKey(userId, name, scopes) {
   const rawKey = crypto.randomBytes(32).toString("hex");
@@ -34,6 +35,24 @@ async function removeKey(id, userId) {
   return deleted;
 }
 
+async function rotateKey(id, userId) {
+  const rawKey = crypto.randomBytes(32).toString("hex");
+  const newKeyHash = crypto.createHash("sha256").update(rawKey).digest("hex");
+
+  const updated = await updateKeyHash(id, userId, newKeyHash);
+
+  if (!updated) {
+    throw new AppError("API key not found", 404);
+  }
+
+  return {
+    id: updated.id,
+    name: updated.name,
+    scopes: updated.scopes,
+    rawKey
+  };
+}
 
 
-module.exports = generateKey;
+
+module.exports = {generateKey ,removeKey,listKeys} ;
