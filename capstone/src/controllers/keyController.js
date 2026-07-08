@@ -1,5 +1,5 @@
 const asyncHandler = require("../utils/asyncHandler.js");
-const {generateKey,listKeys,removeKey,rotateKey} = require("../services/keyService/generateKey.js")
+const {generateKey,listKeys,removeKey,rotateKey} = require("../services/keyService.js")
 
 const createKeyController = asyncHandler(async (req, res) => {
   const key = await generateKey(req.user.userId, req.body.name, req.body.scopes);

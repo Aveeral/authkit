@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { validate } = require("../middleware/validate.js");
+const validate  = require("../middleware/validate.js");
 const { registerSchema, loginSchema } = require("../schemas/authSchemas.js"); // you'll define these two Zod schemas
 const { registerController, loginController, refreshController, logoutController } = require("../controllers/authController.js");
 
