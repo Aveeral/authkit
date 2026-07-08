@@ -55,4 +55,4 @@ async function rotateKey(id, userId) {
 
 
 
-module.exports = {generateKey ,removeKey,listKeys} ;
+module.exports = {generateKey ,removeKey,listKeys,rotateKey} ;
